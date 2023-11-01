@@ -23,6 +23,7 @@ import starkwareCrypto from "@starkware-industries/starkware-crypto-utils";
 // Polkadot
 import { Keyring } from "@polkadot/api";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
+import {Keypair, StrKey} from 'stellar-sdk'
 
 // Near
 // import { keyStores, KeyPair, utils } from "near-api-js";
@@ -373,23 +374,24 @@ const getStellarAddress = async () => {
 
   // Using the getED25519Key function to get the private key in hex format
   const { getED25519Key } = await import("@toruslabs/openlogin-ed25519");
-  const ed25519key = getED25519Key(privateKey).sk.toString("hex");
+  const ed25519key = getED25519Key(privateKey).pk;
 
   // Ensure that ed25519key is a valid 32-byte hexadecimal string
-  if (!ed25519key || ed25519key.length !== 64) {
+  if (!ed25519key) {
     console.error("Invalid private key format");
     return null;
   }
 
-  // Get user's Stellar public address
-  const stellarSdk = require("stellar-sdk");
+
 
   try {
+    let sPrivate = StrKey.encodeEd25519SecretSeed(ed25519key) // stellar uses string encoding to encode both private and public key
     // Create a Stellar Keypair from the provided Ed25519 private key in hex format
-    const sourceKeypair = stellarSdk.Keypair.fromSecret(ed25519key);
+    const sourceKeypair = Keypair.fromSecret(sPrivate);
 
     // Get the Stellar address
     const stellarAddress = sourceKeypair.publicKey();
+    uiConsole(stellarAddress)
 
     return stellarAddress;
   } catch (error) {
